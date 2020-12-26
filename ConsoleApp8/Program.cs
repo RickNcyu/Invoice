@@ -8,104 +8,74 @@ using System.Data.OleDb;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
+using ExcelDataReader;
+using System.Text.RegularExpressions;
 
 namespace ConsoleApp8
-{
+{  
     class Program
     {   
-        static int Main(string[] args)
-        {  
+        static void Main(string[] args)
+        {
+            DataSet result;
             
-            /////////////////////////////////////////////////////////////
-            string connectionString = @"Persist Security Info=False;Integrated Security=true;  Server=localhost\SQLEXPRESS;Initial Catalog=TEST;User ID=;Password=;";
-            /////////////////////////////////////////////////////////////
-            
-            
-            string Title=null;
-            string Number = null;
-            SqlConnection connet = new SqlConnection(connectionString);
-            SqlCommand command = new SqlCommand("SELECT * FROM StatSets", connet);
-            connet.Open();
-            SqlDataReader reader = command.ExecuteReader();
-            while (reader.Read())
-            { 
-                Title = reader.GetString(0);
-                Number = reader.GetString(3);
-            }
-           
 
-            connet.Close();
-            //Console.WriteLine(Number);
-
-            /////////////////////////////////////////////////////////////
-            string fileName = @"./invnoapply.csv";
-            /////////////////////////////////////////////////////////////
-
+            string fileName = @"./110全年各站配號.xlsx";
             FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
             /////////////////////////////////////////////////////////////
-            string outfileName = @"./Invoice.txt";
+
+            /////////////////////////////////////////////////////////////
+            string path = @"D:/各站發票";
+            System.IO.Directory.CreateDirectory(path);
+            
             /////////////////////////////////////////////////////////////
 
-            FileStream fs2 = new FileStream(outfileName, FileMode.Create, FileAccess.Write);
 
-            using (StreamReader sr = new StreamReader(fs, Encoding.UTF8))
+            //xlsx讀取
+            using (IExcelDataReader excelReader = ExcelReaderFactory.CreateOpenXmlReader(fs))
             {
-                using (StreamWriter sw = new StreamWriter(fs2, Encoding.Default))
+                //
+   
+                //忽略第一行資料 exceldatasetconfiguration
+                result = excelReader.AsDataSet(new ExcelDataSetConfiguration()
                 {
-                    string temp = "";
-                string[] arrTemp;
-                int row = 0;
-                string[] yearandmon;               
-                string[] year2andmon;
-                string con,con2;
-                string output;
-                int yeartoin,yeartoin2;
-                    
-                    while ((temp = sr.ReadLine()) != null)
-                {
-                        //Console.WriteLine(Number);
-                        
-                    if (row > 0)
-                    {   
-                            arrTemp = temp.Split(',','~');
-                        if (arrTemp[0] != Number) throw new System.ArgumentException("請檢查第" + row.ToString() + "筆客戶編號");
-                        //Console.WriteLine(arrTemp[0]);
-                        //Console.WriteLine(arrTemp[0]+" "+ arrTemp[1] + " "+arrTemp[2]+ " "+ arrTemp[3]+" "+ arrTemp[4] +" "+ arrTemp[5] +" "+ arrTemp[6]+" "+arrTemp[7]);
-                        //Console.WriteLine(arrTemp[3] + " " + arrTemp[4]);
-                        yearandmon = arrTemp[3].Split('/');
-                        year2andmon = arrTemp[4].Split('/');
-                        //Console.WriteLine(yearandmon[0] + year2andmon[0]);
-                        //Console.WriteLine(yearandmon[1] + year2andmon[1]);
-                        yeartoin = Int32.Parse(yearandmon[0])+1911;
-                        con = yeartoin.ToString() + yearandmon[1];
-                        //Console.WriteLine(con);
-                        yeartoin2 = Int32.Parse(year2andmon[0]) + 1911;
-                        con2 = yeartoin2.ToString()+year2andmon[1];
-                        //Console.WriteLine(con2);
-                        output =Title + " " + con  + con2 + " "  + arrTemp[5] + " " + arrTemp[6] + " " + arrTemp[7] + " " + "N";
-                          
-                        Console.WriteLine(output);
-                        
-                         sw.WriteLine(output);
-                        }
-                    row++;
-                    //Console.WriteLine(row);
-                }
-                    Console.WriteLine("請再次確認即將匯入的資料是否正確完畢後輸入Y/N");
-                   
-                }
+                    ConfigureDataTable = (_) => new ExcelDataTableConfiguration()
+                    {
+                        UseHeaderRow = true
+                    }
+                });
+
+                int Colcount = result.Tables[0].Columns.Count;
+                string[] name =  new string[] {"KD","LY","NT","QN","SH","UC"};
+                int Rowcount = result.Tables[0].Rows.Count;
                 
+                for (int i = 0; i < Rowcount-1; i++)
+                {
+                    string filename;
+                    filename = @"D:/各站發票/" + result.Tables[0].Rows[i][0].ToString();
+                    System.IO.Directory.CreateDirectory(filename); ;
+
+                    string output,outputtitle;
+                    string outfileName = filename+ @"/invnoapply.csv";
+                    FileStream fs2 = new FileStream(outfileName, FileMode.Create, FileAccess.Write);
+                    using (StreamWriter sw = new StreamWriter(fs2, Encoding.Default))
+                    {
+                        outputtitle = "營業人統編"+","+"發票類別代號"+","+"發票類別"+","+"發票期別" + "," +"發票字軌名稱"+"," + "發票起號"+"," + "發票迄號";
+                        sw.WriteLine(outputtitle);
+
+                        int count = 1;
+                        for (int q = 0; q < 6; q++)
+                        {
+                            output = result.Tables[0].Rows[i][1].ToString() + "," + "7" + "," + "一般稅額計算" + "," + "110/" + count.ToString("00")+ " ~ "+"110/" + ((count+1).ToString("00")) + ","+name[q]+","+ result.Tables[0].Rows[i][5].ToString()+","+ result.Tables[0].Rows[i][6].ToString();
+                            sw.WriteLine(output);
+                            count=count+2;
+                        }   
+                    }
+
+                }
             }
             
-            
-         
-            connet.Close();
-
-            string ret;
-            ret = Console.ReadLine();
-            if (ret == "Y"|| ret== "y") return 1;
-            else  return 0;
         }
     }
 }
