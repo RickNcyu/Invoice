@@ -20,7 +20,7 @@ namespace ConsoleApp8
             DataSet result;
             //
 
-            string fileName = @"./110全年各站配號.xlsx";
+            string fileName = @"./111全年各站配號.xlsx";
             FileStream fs = new FileStream(fileName, FileMode.Open, FileAccess.Read);
 
             /////////////////////////////////////////////////////////////
@@ -67,7 +67,7 @@ namespace ConsoleApp8
                         int count = 1;
                         for (int q = 0; q < 6; q++)
                         {
-                            output = result.Tables[0].Rows[i][1].ToString() + "," + "7" + "," + "一般稅額計算" + "," + "110/" + count.ToString("00")+ " ~ "+"110/" + ((count+1).ToString("00")) + ","+name[q]+","+ result.Tables[0].Rows[i][5].ToString()+","+ result.Tables[0].Rows[i][6].ToString();
+                            output = result.Tables[0].Rows[i][1].ToString() + "," + "7" + "," + "一般稅額計算" + "," + "111/" + count.ToString("00")+ " ~ "+"111/" + ((count+1).ToString("00")) + ","+name[q]+","+ result.Tables[0].Rows[i][5].ToString()+","+ result.Tables[0].Rows[i][6].ToString();
                             sw.WriteLine(output);
                             count=count+2;
                         }   
